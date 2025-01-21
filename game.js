@@ -11,8 +11,18 @@ const bacteria = [];
 const bacteriaColors = [];
 
 function randomHueToRGB(hue) {
-    const f = (n) => Math.abs(((n * 6 + hue) % 6) - 3) - 1;
-    return [f(0), f(1), f(2)].map((x) => Math.max(0, Math.min(1, x)));
+    const chroma = 1; // saturated colour
+    const x = chroma * (1 - Math.abs((hue / 60) % 2 - 1));
+    let r = 0, g = 0, b = 0;
+
+    if (hue >= 0 && hue < 60) [r, g, b] = [chroma, x, 0];
+    else if (hue >= 60 && hue < 120) [r, g, b] = [x, chroma, 0];
+    else if (hue >= 120 && hue < 180) [r, g, b] = [0, chroma, x];
+    else if (hue >= 180 && hue < 240) [r, g, b] = [0, x, chroma];
+    else if (hue >= 240 && hue < 300) [r, g, b] = [x, 0, chroma];
+    else if (hue >= 300 && hue < 360) [r, g, b] = [chroma, 0, x];
+
+    return [r, g, b]; // retrun RGB vals
 }
 
 // enstantiate bacteria on the circle
@@ -21,8 +31,9 @@ for (let i = 0; i < bacteriaCount; i++) {
     const x = Math.cos(angle) * 0.8; // center x (main circ)
     const y = Math.sin(angle) * 0.8; // center y (main)
     bacteria.push({ x, y, radius: 0.0 }); // init rad ~= 0
-    bacteriaColors.push(randomHueToRGB(Math.random() * 360));
-}
+
+    const randomHue = Math.random() * 360; // randd hue (0-360)
+    bacteriaColors.push(randomHueToRGB(randomHue));}
 
 // bacteria growth
 function updateBacteria(deltaTime) {
