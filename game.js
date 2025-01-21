@@ -6,7 +6,7 @@ if (!gl) {
     console.error("WebGL not supported!");
 }
 
-const bacteriaCount = 22; // number of enemies
+const bacteriaCount = 10; // number of enemies
 const bacteria = [];
 const bacteriaColors = [];
 
@@ -25,7 +25,7 @@ function randomHueToRGB(hue) {
     return [r, g, b]; // retrun RGB vals
 }
 
-// enstantiate bacteria on the circle
+// egame loop
 for (let i = 0; i < bacteriaCount; i++) {
     const angle = Math.random() * 2 * Math.PI; // tand angle
     const x = Math.cos(angle) * 0.8; // center x (main circ)
@@ -86,28 +86,30 @@ const fragmentShaderSource = `
 
     void main() {
         vec2 coord = (gl_FragCoord.xy / 300.0) - vec2(1.0, 1.0); // Normalize to (-1, 1)
-        float dist = distance(coord, u_Center);
 
-        if (dist <= u_Radius) {
-            // draw board (white)
-            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    // check if within any bacteria circle
+    for (int i = 0; i < 10; i++) {
+        if (i >= u_BacteriaCount) break;
 
-            // check if within any bacteria circle
-            for (int i = 0; i < 10; i++) {
-                if (i >= u_BacteriaCount) break;
+        vec2 bacteriaCenter = u_Bacteria[i].xy; float bacteriaRadius = u_Bacteria[i].z;
+        float bacteriaDist = distance(coord, bacteriaCenter);
 
-                vec2 bacteriaCenter = u_Bacteria[i].xy;
-                float bacteriaRadius = u_Bacteria[i].z;
-                float bacteriaDist = distance(coord, bacteriaCenter);
-
-                if (bacteriaDist <= bacteriaRadius) {
-                    gl_FragColor = vec4(u_Colors[i], 1.0); // Bacteria color
-                }
-            }
-        } else {
-            discard; // oob
+        if (bacteriaDist <= bacteriaRadius) {
+            // Render bacteria color if the fragment is inside a bacteria circle
+            gl_FragColor = vec4(u_Colors[i], 1.0);
+            return;
         }
     }
+
+
+    // OOB
+    float dist = distance(coord, u_Center);
+    if (dist <= u_Radius) {
+        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // main circ (white area)
+    } else {
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); // oob (black backgroun)
+    }
+}
 `;
 
 // compile & create shader
