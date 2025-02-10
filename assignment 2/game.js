@@ -6,6 +6,45 @@ if (!gl) {
     console.error("WebGL not supported!");
 }
 
+// make some WebGL coordinates - normalized per device ratio
+function getMouseCoords(event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / canvas.width) * 2 - 1;
+    const y = -(((event.clientY - rect.top) / canvas.height) * 2 - 1);
+    return { x, y };
+}
+
+// is mouse click on any targets
+function zapBacteria(event) {
+    const { x, y } = getMouseCoords(event);
+    let bacteriaRemoved = false;
+
+    for (let i = bacteria.length - 1; i >= 0; i--) {
+        const b = bacteria[i];
+        const distance = Math.sqrt((x - b.x) ** 2 + (y - b.y) ** 2);
+
+        if (distance <= b.radius) {
+            bacteria.splice(i, 1); // kill the bacteria
+            bacteriaColors.splice(i, 1);
+            bacteriaRemoved = true; // mark for destruction if in radus when clicked// return;
+        }
+    }
+
+    if (bacteriaRemoved) { updateUniforms(); requestAnimationFrame(render); } //update to bugfix bact freezing instead of nothing
+}
+
+
+function updateUniforms() { //update & kill any bacteria marked for death
+    const bacteriaData = bacteria.flatMap((b) => [b.x, b.y, b.radius]); const colorsData = bacteriaColors.flat();
+
+    gl.uniform3fv(gl.getUniformLocation(program, "u_Bacteria"), new Float32Array(bacteriaData));
+    gl.uniform3fv(gl.getUniformLocation(program, "u_Colors"), new Float32Array(colorsData));
+    gl.uniform1i(gl.getUniformLocation(program, "u_BacteriaCount"), bacteria.length);
+}
+
+// our event listener will run when we recieve a clikc
+canvas.addEventListener("click", zapBacteria);
+
 const bacteriaCount = 10; // number of enemies
 const bacteria = [];
 const bacteriaColors = [];
@@ -49,18 +88,25 @@ function render(timestamp) {
 
     updateBacteria(deltaTime / 1000); // bacteria growth
 
-    // sned uniform to shader
-    const uBacteria = gl.getUniformLocation(program, "u_Bacteria"); const uColors = gl.getUniformLocation(program, "u_Colors");
-    const uBacteriaCount = gl.getUniformLocation(program, "u_BacteriaCount");
+    // // sned uniform to shader
+    // const uBacteria = gl.getUniformLocation(program, "u_Bacteria"); const uColors = gl.getUniformLocation(program, "u_Colors");
+    // const uBacteriaCount = gl.getUniformLocation(program, "u_BacteriaCount");
 
     const bacteriaData = bacteria.flatMap((b) => [b.x, b.y, b.radius]);
     const colorsData = bacteriaColors.flat();
 
-    gl.uniform3fv(uBacteria, new Float32Array(bacteriaData));
-    gl.uniform3fv(uColors, new Float32Array(colorsData));  gl.uniform1i(uBacteriaCount, bacteriaCount);
+    // gl.uniform3fv(uBacteria, new Float32Array(bacteriaData));
+    // gl.uniform3fv(uColors, new Float32Array(colorsData));  gl.uniform1i(uBacteriaCount, bacteriaCount);
 
-    // clr
-    gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // // clr
+    // gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+    gl.uniform3fv(gl.getUniformLocation(program, "u_Bacteria"), new Float32Array(bacteriaData));
+    gl.uniform3fv(gl.getUniformLocation(program, "u_Colors"), new Float32Array(colorsData));
+    gl.uniform1i(gl.getUniformLocation(program, "u_BacteriaCount"), bacteria.length);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
     requestAnimationFrame(render);
 }
