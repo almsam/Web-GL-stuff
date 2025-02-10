@@ -6,16 +6,15 @@ if (!gl) {
     console.error("WebGL not supported!");
 }
 
-// make some WebGL coordinates - normalized per device ratio
-function getMouseCoords(event) {
+////// killing:
+function getMouseCoords(event) { // make some WebGL coordinates - normalized per device ratio
     const rect = canvas.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / canvas.width) * 2 - 1;
     const y = -(((event.clientY - rect.top) / canvas.height) * 2 - 1);
     return { x, y };
 }
 
-// is mouse click on any targets
-function zapBacteria(event) {
+function zapBacteria(event) { // is mouse click on any targets
     const { x, y } = getMouseCoords(event);
     let bacteriaRemoved = false;
 
@@ -26,13 +25,14 @@ function zapBacteria(event) {
         if (distance <= b.radius) {
             bacteria.splice(i, 1); // kill the bacteria
             bacteriaColors.splice(i, 1);
+            bacteriaSpawnTimes.splice(i, 1);
+            bacteriaAngles.splice(i, 1);
             bacteriaRemoved = true; // mark for destruction if in radus when clicked// return;
         }
     }
 
     if (bacteriaRemoved) { updateUniforms(); requestAnimationFrame(render); } //update to bugfix bact freezing instead of nothing
 }
-
 
 function updateUniforms() { //update & kill any bacteria marked for death
     const bacteriaData = bacteria.flatMap((b) => [b.x, b.y, b.radius]); const colorsData = bacteriaColors.flat();
@@ -42,14 +42,19 @@ function updateUniforms() { //update & kill any bacteria marked for death
     gl.uniform1i(gl.getUniformLocation(program, "u_BacteriaCount"), bacteria.length);
 }
 
-// our event listener will run when we recieve a clikc
-canvas.addEventListener("click", zapBacteria);
+canvas.addEventListener("click", zapBacteria); // our event listener will run when we recieve a clikc
+
+
+////// generating enemies:
 
 const bacteriaCount = 10; // number of enemies
 const bacteria = [];
 const bacteriaColors = [];
+const bacteriaSpawnTimes = [];
+const bacteriaAngles = [];
+let score = 0;
 
-function randomHueToRGB(hue) {
+function randomHueToRGB(hue) { // color randomization
     const chroma = 1; // saturated colour
     const x = chroma * (1 - Math.abs((hue / 60) % 2 - 1));
     let r = 0, g = 0, b = 0;
@@ -64,6 +69,11 @@ function randomHueToRGB(hue) {
     return [r, g, b]; // retrun RGB vals
 }
 
+//points:
+function updateScore() { document.getElementById("scoreDisplay").textContent = "Score: " + Math.floor(score); }
+
+setInterval(updateScore, 500); // update 500 = 500 ms = 0.5s
+
 // egame loop
 for (let i = 0; i < bacteriaCount; i++) {
     const angle = Math.random() * 2 * Math.PI; // tand angle
@@ -72,14 +82,26 @@ for (let i = 0; i < bacteriaCount; i++) {
     bacteria.push({ x, y, radius: 0.0 }); // init rad ~= 0
 
     const randomHue = Math.random() * 360; // randd hue (0-360)
-    bacteriaColors.push(randomHueToRGB(randomHue));}
+    bacteriaColors.push(randomHueToRGB(randomHue));
+    bacteriaSpawnTimes.push(performance.now());
+    bacteriaAngles.push(angle);
+}
 
 // bacteria growth
 function updateBacteria(deltaTime) {
     const growthRate = 0.05; // rate (grw per second)
-    bacteria.forEach((b) => {
+    bacteria.forEach((b, i) => {
         b.radius += growthRate * deltaTime; // we grow our rad
+        // if bact has crossed A2 q3's 30-degree threshold
+        if (Math.abs(bacteriaAngles[i]) >= (30 * (Math.PI / 180))) {
+            score += 5; bacteriaAngles[i] = 0; // add pts & reset tracking
+        }
+
+        bacteriaAngles[i] += 0.02;
     });
+//     bacteria.forEach((b) => {
+//         b.radius += growthRate * deltaTime; // we grow our rad
+//     });
 }
 
 function render(timestamp) {
