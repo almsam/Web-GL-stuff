@@ -54,6 +54,13 @@ const bacteriaSpawnTimes = [];
 const bacteriaAngles = [];
 let score = 0;
 
+// let poisoned = []; // num bacteria dead
+let poisoned = Array(bacteria.length).fill(false);
+let bacteriaHitThreshold = new Set();
+let thresholdHits = 0; // num bacteria that hit threshold
+let gameOver = false;
+let thresholdCrossed = Array(bacteria.length).fill(false);
+
 function randomHueToRGB(hue) { // color randomization
     const chroma = 1; // saturated colour
     const x = chroma * (1 - Math.abs((hue / 60) % 2 - 1));
@@ -69,12 +76,12 @@ function randomHueToRGB(hue) { // color randomization
     return [r, g, b]; // retrun RGB vals
 }
 
-//points:
+////// points:
 function updateScore() { document.getElementById("scoreDisplay").textContent = "Score: " + Math.floor(score); }
 
 setInterval(updateScore, 500); // update 500 = 500 ms = 0.5s
 
-// egame loop
+////// egame loop
 for (let i = 0; i < bacteriaCount; i++) {
     const angle = Math.random() * 2 * Math.PI; // tand angle
     const x = Math.cos(angle) * 0.8; // center x (main circ)
@@ -89,21 +96,67 @@ for (let i = 0; i < bacteriaCount; i++) {
 
 // bacteria growth
 function updateBacteria(deltaTime) {
+    if (gameOver) return;
+
     const growthRate = 0.05; // rate (grw per second)
+    const threshold = 1200 * (Math.PI / 180); // 30-degree thresh
+
+    let allPoisoned = true;
+
+    // score += 5;
+
     bacteria.forEach((b, i) => {
+        if (poisoned[i]) return; // inore poisoned bacteria
+
+        allPoisoned = false;
+
+        if (bacteriaAngles[i] === undefined) bacteriaAngles[i] = 0; //issue if x DNE
+
         b.radius += growthRate * deltaTime; // we grow our rad
+        bacteriaAngles[i] += 0.02; // angle value cause im lazy
+
+        if (!bacteriaHitThreshold.has(i)) { score += 1; } //has hit the threshold
+
         // if bact has crossed A2 q3's 30-degree threshold
-        if (Math.abs(bacteriaAngles[i]) >= (30 * (Math.PI / 180))) {
-            score += 5; bacteriaAngles[i] = 0; // add pts & reset tracking
+        // if (Math.abs(bacteriaAngles[i]) >= threshold) {
+        // if (!thresholdCrossed[i] && Math.abs(bacteriaAngles[i]) >= threshold) {
+        if (!bacteriaHitThreshold.has(i) && (bacteriaAngles[i] >= threshold)) {
+            thresholdHits++; score+=1000; console.log(bacteriaAngles[i]);
+            bacteriaHitThreshold.add(i);
+            // thresholdCrossed[i] = true;
+            // bacteriaAngles[i] = 0; // add pts & reset tracking
+
+            // if 2 enemy reach thresh, we loose
+            
         }
 
-        bacteriaAngles[i] += 0.02;
+        
+
     });
+
+    if (thresholdHits >= 2) {
+        console.log("Game Over: Ya Lost!");
+        gameOver = true;
+        return;
+    }
+
+    if (allPoisoned){//(poisoned.every(p => p)) {
+        console.log("You Win! All bacteria poisoned!!");
+        gameOver = true;
+    }
+
 //     bacteria.forEach((b) => {
 //         b.radius += growthRate * deltaTime; // we grow our rad
 //     });
 }
 
+function poisonBacteria(index) {
+    if (!poisoned[index]) {
+        poisoned[index] = true;
+    }
+}
+
+////// rendering:
 function render(timestamp) {
     const deltaTime = timestamp - (lastFrameTime || timestamp);
     lastFrameTime = timestamp;
