@@ -77,7 +77,7 @@ function randomHueToRGB(hue) { // color randomization
 }
 
 ////// points:
-function updateScore() { document.getElementById("scoreDisplay").textContent = "Score: " + Math.floor(score); }
+function updateScore() { if(!gameOver) { document.getElementById("scoreDisplay").textContent = "Score: " + Math.floor(score); } }
 
 setInterval(updateScore, 500); // update 500 = 500 ms = 0.5s
 
@@ -106,6 +106,10 @@ function updateBacteria(deltaTime) {
     // score += 5;
 
     bacteria.forEach((b, i) => {
+        if (gameOver) {
+            showGameOverMessage();
+            return;
+        }
         if (poisoned[i]) return; // inore poisoned bacteria
 
         allPoisoned = false;
@@ -136,18 +140,29 @@ function updateBacteria(deltaTime) {
 
     if (thresholdHits >= 2) {
         console.log("Game Over: Ya Lost!");
+        document.getElementById("scoreDisplay").textContent = "Game Over: Ya Lost!";
         gameOver = true;
         return;
     }
 
     if (allPoisoned){//(poisoned.every(p => p)) {
         console.log("You Win! All bacteria poisoned!!");
+        document.getElementById("scoreDisplay").textContent = "You Win! All bacteria poisoned!!";
         gameOver = true;
     }
 
 //     bacteria.forEach((b) => {
 //         b.radius += growthRate * deltaTime; // we grow our rad
 //     });
+}
+
+function showGameOverMessage() {
+    const messageElement = document.getElementById("gameStatus"); const messageText = document.getElementById("statusMessage");
+
+    if (bacteriaHitThreshold.size >= 2) { messageText.textContent = "Game Over: Ya Lost!";
+    } else { messageText.textContent = "You Win! All bacteria poisoned!!!!"; }
+
+    messageElement.style.visibility = "visible"; //fix message not showng up glitch
 }
 
 function poisonBacteria(index) {
@@ -158,6 +173,8 @@ function poisonBacteria(index) {
 
 ////// rendering:
 function render(timestamp) {
+    if (gameOver) return;
+
     const deltaTime = timestamp - (lastFrameTime || timestamp);
     lastFrameTime = timestamp;
 

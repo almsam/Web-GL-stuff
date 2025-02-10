@@ -22,13 +22,16 @@
         }
         
     </style>
-    <div id="scoreDisplay" style="color: white; font-size: 20px; position: absolute; top: 10px; left: 10px;">
-        Score: 0
-    </div>
 </head>
 
 <body>
     <canvas id="gameCanvas" width="600" height="600"></canvas>
+    <div id="scoreDisplay" style="color: white; font-size: 20px; position: absolute; top: 10px; left: 10px;">
+        Score: 0
+    </div>
+    <div id="gameStatus" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: bold; color: white; visibility: hidden;">
+        <span id="statusMessage"></span>
+    </div>
     <script src="game.js"></script>
 </body>
 
