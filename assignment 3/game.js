@@ -56,4 +56,35 @@ function main() {
   }
   gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(a_Position);
+
+  //buffer w/ grid lines
+  var indexBuffer = gl.createBuffer();
+  if (!indexBuffer) {
+    console.log('failed to create the index buffer object');
+    return;
+  }
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(sphereData.indices), gl.STATIC_DRAW);
+
+  // clear color
+  gl.clearColor(0.0, 0.0, 0.0, 1.0); // black background
+  gl.enable(gl.DEPTH_TEST);
+
+  // perspective stuff:
+  var mvpMatrix = new Matrix4();
+  mvpMatrix.setPerspective(45, canvas.width/canvas.height, 0.1, 100);
+  mvpMatrix.lookAt(3, 3, 3, 0, 0, 0, 0, 1, 0);
+
+  // get the storage location of our perspective matrix
+  var u_MvpMatrix = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
+  if (!u_MvpMatrix) {
+    console.log('could nt get the storage location of u_MvpMatrix');
+    return;
+  }
+  gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+
+  // clear color & draw the grid lines on sphere
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
 }
