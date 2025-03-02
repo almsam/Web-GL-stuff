@@ -16,6 +16,11 @@ var FSHADER_SOURCE =
   '  gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);\n' +  // white grid lines
   '}\n';
 
+// global vars for rotation (a3 q2)
+var dragging = false; var lastX = 0, lastY = 0;
+var rotationAngleX = 0, rotationAngleY = 0;
+var modelMatrix = new Matrix4();
+
 function main() {
   // link to HTML stuffs
   var canvas = document.getElementById('gameCanvas');
@@ -70,10 +75,30 @@ function main() {
   gl.clearColor(0.0, 0.0, 0.0, 1.0); // black background
   gl.enable(gl.DEPTH_TEST);
 
-  // perspective stuff:
-  var mvpMatrix = new Matrix4();
-  mvpMatrix.setPerspective(45, canvas.width/canvas.height, 0.1, 100);
-  mvpMatrix.lookAt(3, 3, 3, 0, 0, 0, 0, 1, 0);
+//   // perspective stuff:
+//   var mvpMatrix = new Matrix4();
+//   mvpMatrix.setPerspective(45, canvas.width/canvas.height, 0.1, 100);
+//   mvpMatrix.lookAt(3, 3, 3, 0, 0, 0, 0, 1, 0);
+
+  canvas.onmousedown = function(ev) {
+    dragging = true;
+    lastX = ev.clientX;
+    lastY = ev.clientY;
+  };
+  canvas.onmouseup = function(ev) {
+    dragging = false;
+  };
+  canvas.onmousemove = function(ev) {
+    if (dragging) {
+      var dx = ev.clientX - lastX;
+      var dy = ev.clientY - lastY;
+      // increment rotation angles
+      rotationAngleY += dx * 0.5; //sensitivity
+      rotationAngleX += dy * 0.5; //sensitivity
+      lastX = ev.clientX;
+      lastY = ev.clientY;
+    }
+  };
 
   // get the storage location of our perspective matrix
   var u_MvpMatrix = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
@@ -81,12 +106,14 @@ function main() {
     console.log('could nt get the storage location of u_MvpMatrix');
     return;
   }
-  gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+//   gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
 
-  // clear color & draw the grid lines on sphere
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+//   // clear color & draw the grid lines on sphere
+//   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
+//   gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
+
+
 }
 
 // now lest generate the sphere vertex positions and grid lines
