@@ -17,4 +17,22 @@ var FSHADER_SOURCE =
   '}\n';
 
 function main() {
+  // link to HTML stuffs
+  var canvas = document.getElementById('gameCanvas');
+  if (!canvas) {
+    console.log('Failed to retrieve the <canvas> element');
+    return;
+  }
+  var gl = canvas.getContext('webgl');
+  if (!gl) {
+    console.log('Failed to get the rendering context for WebGL');
+    return;
+  }
+
+  // initShaders 
+  if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
+    console.log('Failed to intialize shaders.');
+    return;
+  }
+
 }
