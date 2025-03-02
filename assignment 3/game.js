@@ -88,3 +88,34 @@ function main() {
 
   gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
 }
+
+// now lest generate the sphere vertex positions and grid lines
+//our sphere is defined by radius, & the number of latBands n longBands
+function initSphere(radius, latBands, longBands) {
+  var vertices = [];
+  var indices = [];
+
+  // generate vertices.
+  for (var latNumber = 0; latNumber <= latBands; latNumber++) {
+    var theta = latNumber * Math.PI / latBands;
+    var sinTheta = Math.sin(theta);
+    var cosTheta = Math.cos(theta);
+
+    for (var longNumber = 0; longNumber <= longBands; longNumber++) {
+      var phi = longNumber * 2 * Math.PI / longBands;
+      var sinPhi = Math.sin(phi);
+      var cosPhi = Math.cos(phi);
+
+      var x = cosPhi * sinTheta;
+      var y = cosTheta;
+      var z = sinPhi * sinTheta;
+      vertices.push(radius * x);
+      vertices.push(radius * y);
+      vertices.push(radius * z);
+    }
+  }
+
+}
+
+// run main() when the page runs
+window.onload = main;
