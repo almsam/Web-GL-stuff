@@ -113,7 +113,31 @@ function main() {
 
 //   gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
 
-
+function render() {
+    // Create the MVP matrix: Projection * View * Model
+    var mvpMatrix = new Matrix4();
+    mvpMatrix.setPerspective(45, canvas.width / canvas.height, 0.1, 100);
+    mvpMatrix.lookAt(3, 3, 3, 0, 0, 0, 0, 1, 0);
+    
+    // Update the model matrix based on drag rotations
+    modelMatrix.setIdentity();
+    modelMatrix.rotate(rotationAngleX, 1, 0, 0);
+    modelMatrix.rotate(rotationAngleY, 0, 1, 0);
+    
+    // Multiply MVP: mvpMatrix = Projection * View * Model
+    mvpMatrix.multiply(modelMatrix);
+    
+    // Pass the final MVP matrix to the shader
+    gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+    
+    // Clear and draw the sphere grid
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
+    
+    requestAnimationFrame(render);
+  }
+  
+  requestAnimationFrame(render);
 }
 
 // now lest generate the sphere vertex positions and grid lines
