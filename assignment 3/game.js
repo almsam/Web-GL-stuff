@@ -115,6 +115,24 @@ function initSphere(radius, latBands, longBands) {
     }
   }
 
+  // generate indices - draw lines along lat n long
+  for (var latNumber = 0; latNumber < latBands; latNumber++) {
+    for (var longNumber = 0; longNumber < longBands; longNumber++) {
+      var first = (latNumber * (longBands + 1)) + longNumber;
+      var second = first + longBands + 1;
+
+      indices.push(first);
+      indices.push(first + 1);
+
+      indices.push(first);
+      indices.push(second);
+    }
+  }
+
+  return {
+    vertices: vertices,
+    indices: indices
+  };
 }
 
 // run main() when the page runs
