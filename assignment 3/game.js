@@ -35,4 +35,25 @@ function main() {
     return;
   }
 
+  // lets make our sphere with grid lines
+  // rad = 1.0, 30 lat bands, 30 long bands
+  var sphereData = initSphere(1.0, 30, 30);
+
+  // buffer of sphere vertices
+  var vertexBuffer = gl.createBuffer();
+  if (!vertexBuffer) {
+    console.log('failed to create the buffer object');
+    return;
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sphereData.vertices), gl.STATIC_DRAW);
+
+  // 
+  var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+  if (a_Position < 0) {
+    console.log('failed to get the storage location of a_Position');
+    return;
+  }
+  gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(a_Position);
 }
