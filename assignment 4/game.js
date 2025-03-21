@@ -57,7 +57,7 @@ function main() {
 
   // lets make our sphere with grid lines
   // rad = 1.0, 30 lat bands, 30 long bands
-  var sphereData = initSphere(1.0, 30, 30);
+  var sphereData = initSphere(1.0, 15, 20);
 
   // buffer of sphere vertices
   var vertexBuffer = gl.createBuffer();
