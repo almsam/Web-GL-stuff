@@ -1,25 +1,40 @@
 "use strict";
 
 // vertex shader
-var VSHADER_SOURCE =
-  'attribute vec4 a_Position;\n' +
-  'uniform mat4 u_MvpMatrix;\n' +
-  'void main() {\n' +
-  '  gl_Position = u_MvpMatrix * a_Position;\n' +
-  '  gl_PointSize = 4.0;\n' +
-  '}\n';
+var VSHADER_SOURCE = `
+  attribute vec4 a_Position;
+  uniform mat4 u_MvpMatrix;
+  varying vec3 v_Position;
+  void main() {
+    gl_Position = u_MvpMatrix * a_Position;
+    v_Position = a_Position.xyz;
+  }
+`;
 
 // frag shader
-var FSHADER_SOURCE =
-  'precision mediump float;\n' +
-  'void main() {\n' +
-  '  gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);\n' +  // white grid lines
-  '}\n';
+
+var FSHADER_SOURCE = `
+  precision mediump float;
+  varying vec3 v_Position;
+  uniform vec3 u_BacteriaCenter;
+  uniform float u_BacteriaRadius;
+  void main() {
+    float dist = distance(v_Position, u_BacteriaCenter);
+    if (dist < u_BacteriaRadius) {
+      gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0); // green bacteria
+    } else {
+      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // white grid // white grid lines
+    }
+  }
+`;
 
 // global vars for rotation (a3 q2)
 var dragging = false; var lastX = 0, lastY = 0;
 var rotationAngleX = 0, rotationAngleY = 0;
 var modelMatrix = new Matrix4();
+
+var bacteriaCenter = [0, 0, 1];
+var bacteriaRadius = 0.05;
 
 function main() {
   // link to HTML stuffs
@@ -106,6 +121,13 @@ function main() {
     console.log('could nt get the storage location of u_MvpMatrix');
     return;
   }
+
+
+
+  var u_BacteriaCenter = gl.getUniformLocation(gl.program, "u_BacteriaCenter");
+  var u_BacteriaRadius = gl.getUniformLocation(gl.program, "u_BacteriaRadius");
+
+
 //   gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
 
 //   // clear color & draw the grid lines on sphere
@@ -114,27 +136,31 @@ function main() {
 //   gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
 
 function render() {
-    // Create the MVP matrix: Projection * View * Model
+    // model-view-proj (MVP) matrix: Projection * View * Model
     var mvpMatrix = new Matrix4();
     mvpMatrix.setPerspective(45, canvas.width / canvas.height, 0.1, 100);
     mvpMatrix.lookAt(3, 3, 3, 0, 0, 0, 0, 1, 0);
     
-    // Update the model matrix based on drag rotations
+    // update the model matrix based on drag rotations
     modelMatrix.setIdentity();
     modelMatrix.rotate(rotationAngleX, 1, 0, 0);
     modelMatrix.rotate(rotationAngleY, 0, 1, 0);
     
-    // Multiply MVP: mvpMatrix = Projection * View * Model
+    // mvpMatrix = Projection * View * Model //multiply it
     mvpMatrix.multiply(modelMatrix);
     
-    // Pass the final MVP matrix to the shader
+    // pass final MVP matrix to the shader
     gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+
+    gl.uniform3fv(u_BacteriaCenter, bacteriaCenter);
+    gl.uniform1f(u_BacteriaRadius, bacteriaRadius);
     
-    // Clear and draw the sphere grid
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
-    
+
+    bacteriaRadius += 0.002; // Increase bacteria growth over time
     requestAnimationFrame(render);
+
   }
   
   requestAnimationFrame(render);
