@@ -1,0 +1,103 @@
+"use strict";
+
+
+var VSHADER_SOURCE = `
+  attribute vec4 a_Position;
+  uniform mat4 u_MvpMatrix;
+  varying vec3 v_Position;
+  void main() {
+    gl_Position = u_MvpMatrix * a_Position;
+    v_Position = a_Position.xyz;
+  }
+`;
+
+
+var FSHADER_SOURCE = `
+  precision mediump float;
+  varying vec3 v_Position;
+  uniform vec3 u_BacteriaCenters[10];
+  uniform float u_BacteriaRadii[10];
+  uniform vec3 u_BacteriaColors[10];
+  void main() {
+    vec4 color = vec4(1.0, 1.0, 1.0, 1.0);
+    for (int i = 0; i < 10; i++) {
+      float dist = distance(v_Position, u_BacteriaCenters[i]);
+      if (dist < u_BacteriaRadii[i]) {
+        color = vec4(u_BacteriaColors[i], 1.0);
+      }
+    }
+    gl_FragColor = color;
+  }
+`;
+
+
+var bacteria = [];
+var maxBacteria = 10;
+
+function generateBacteria() {
+  for (let i = 0; i < maxBacteria; i++) {
+    bacteria.push({
+      center: [Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1],
+      radius: 0.05,
+      color: [Math.random(), Math.random(), Math.random()],
+    });
+  }
+}
+
+function main() {
+  var canvas = document.getElementById("gameCanvas");
+  var gl = canvas.getContext("webgl");
+  
+  if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
+    console.log("Failed to initialize shaders.");
+    return;
+  }
+
+  generateBacteria();
+
+  var sphereData = initSphere(1.0, 30, 30);
+  var vertexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sphereData.vertices), gl.STATIC_DRAW);
+
+  var a_Position = gl.getAttribLocation(gl.program, "a_Position");
+  gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(a_Position);
+
+  var indexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(sphereData.indices), gl.STATIC_DRAW);
+
+  var u_MvpMatrix = gl.getUniformLocation(gl.program, "u_MvpMatrix");
+  var u_BacteriaCenters = gl.getUniformLocation(gl.program, "u_BacteriaCenters");
+  var u_BacteriaRadii = gl.getUniformLocation(gl.program, "u_BacteriaRadii");
+  var u_BacteriaColors = gl.getUniformLocation(gl.program, "u_BacteriaColors");
+
+  function render() {
+    var mvpMatrix = new Matrix4();
+    mvpMatrix.setPerspective(45, canvas.width / canvas.height, 0.1, 100);
+    mvpMatrix.lookAt(3, 3, 3, 0, 0, 0, 0, 1, 0);
+    gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+
+    var centers = [], radii = [], colors = [];
+    for (let i = 0; i < maxBacteria; i++) {
+      centers.push(...bacteria[i].center);
+      radii.push(bacteria[i].radius);
+      colors.push(...bacteria[i].color);
+      bacteria[i].radius += 0.002;
+    }
+    
+    gl.uniform3fv(u_BacteriaCenters, new Float32Array(centers));
+    gl.uniform1fv(u_BacteriaRadii, new Float32Array(radii));
+    gl.uniform3fv(u_BacteriaColors, new Float32Array(colors));
+    
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
+
+    requestAnimationFrame(render);
+  }
+
+  requestAnimationFrame(render);
+}
+
+window.onload = main;
