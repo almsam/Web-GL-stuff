@@ -16,15 +16,18 @@ var VSHADER_SOURCE = `
 var FSHADER_SOURCE = `
   precision mediump float;
   varying vec3 v_Position;
-  uniform vec3 u_BacteriaCenter;
-  uniform float u_BacteriaRadius;
+  uniform vec3 u_BacteriaCenters[10];
+  uniform float u_BacteriaRadii[10];
+  uniform vec3 u_BacteriaColors[10];
   void main() {
-    float dist = distance(v_Position, u_BacteriaCenter);
-    if (dist < u_BacteriaRadius) {
-      gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0); // green bacteria
-    } else {
-      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // white grid // white grid lines
+    vec4 color = vec4(1.0, 1.0, 1.0, 1.0); // Default white grid
+    for (int i = 0; i < 10; i++) {
+      float dist = distance(v_Position, u_BacteriaCenters[i]);
+      if (dist < u_BacteriaRadii[i]) {
+        color = vec4(u_BacteriaColors[i], 1.0);
+      }
     }
+    gl_FragColor = color;
   }
 `;
 
@@ -35,6 +38,19 @@ var modelMatrix = new Matrix4();
 
 var bacteriaCenter = [0, 0, 1];
 var bacteriaRadius = 0.05;
+
+var bacteria = [];
+var maxBacteria = 10;
+
+function generateBacteria() {
+  for (let i = 0; i < maxBacteria; i++) {
+    bacteria.push({
+      center: [Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1],
+      radius: 0.05,
+      color: [Math.random(), Math.random(), Math.random()],
+    });
+  }
+}
 
 function main() {
   // link to HTML stuffs
@@ -54,6 +70,8 @@ function main() {
     console.log('Failed to intialize shaders.');
     return;
   }
+
+  generateBacteria();
 
   // lets make our sphere with grid lines
   // rad = 1.0, 30 lat bands, 30 long bands
@@ -135,20 +153,53 @@ function main() {
 
 //   gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
 
-function render() {
-    // model-view-proj (MVP) matrix: Projection * View * Model
+// function render() {
+//     // model-view-proj (MVP) matrix: Projection * View * Model
+//     var mvpMatrix = new Matrix4();
+//     mvpMatrix.setPerspective(45, canvas.width / canvas.height, 0.1, 100);
+//     mvpMatrix.lookAt(3, 3, 3, 0, 0, 0, 0, 1, 0);
+    
+//     // update the model matrix based on drag rotations
+//     modelMatrix.setIdentity();
+//     modelMatrix.rotate(rotationAngleX, 1, 0, 0);
+//     modelMatrix.rotate(rotationAngleY, 0, 1, 0);
+    
+//     // mvpMatrix = Projection * View * Model //multiply it
+//     mvpMatrix.multiply(modelMatrix);
+    
+//     // pass final MVP matrix to the shader
+//     gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+
+//     gl.uniform3fv(u_BacteriaCenter, bacteriaCenter);
+//     gl.uniform1f(u_BacteriaRadius, bacteriaRadius);
+    
+//     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+//     gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
+
+//     bacteriaRadius += 0.0005; // Increase bacteria growth over time
+//     requestAnimationFrame(render);
+
+//   }
+  
+//   requestAnimationFrame(render);
+
+
+  var u_MvpMatrix = gl.getUniformLocation(gl.program, "u_MvpMatrix");
+  var u_BacteriaCenters = gl.getUniformLocation(gl.program, "u_BacteriaCenters");
+  var u_BacteriaRadii = gl.getUniformLocation(gl.program, "u_BacteriaRadii");
+  var u_BacteriaColors = gl.getUniformLocation(gl.program, "u_BacteriaColors");
+
+  function render() {
     var mvpMatrix = new Matrix4();
     mvpMatrix.setPerspective(45, canvas.width / canvas.height, 0.1, 100);
     mvpMatrix.lookAt(3, 3, 3, 0, 0, 0, 0, 1, 0);
-    
-    // update the model matrix based on drag rotations
+
     modelMatrix.setIdentity();
     modelMatrix.rotate(rotationAngleX, 1, 0, 0);
     modelMatrix.rotate(rotationAngleY, 0, 1, 0);
-    
-    // mvpMatrix = Projection * View * Model //multiply it
+
     mvpMatrix.multiply(modelMatrix);
-    
+
     // pass final MVP matrix to the shader
     gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
 
@@ -158,12 +209,30 @@ function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
 
-    bacteriaRadius += 0.002; // Increase bacteria growth over time
-    requestAnimationFrame(render);
+//     bacteriaRadius += 0.0005; // Increase bacteria growth over time
+    
+    gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
 
+    var centers = [], radii = [], colors = [];
+    for (let i = 0; i < maxBacteria; i++) {
+      centers.push(...bacteria[i].center);
+      radii.push(bacteria[i].radius);
+      colors.push(...bacteria[i].color);
+      bacteria[i].radius += 0.0005; // Growth over time
+    }
+    
+    gl.uniform3fv(u_BacteriaCenters, new Float32Array(centers));
+    gl.uniform1fv(u_BacteriaRadii, new Float32Array(radii));
+    gl.uniform3fv(u_BacteriaColors, new Float32Array(colors));
+    
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
+
+    requestAnimationFrame(render);
   }
-  
+
   requestAnimationFrame(render);
+
 }
 
 // now lest generate the sphere vertex positions and grid lines
