@@ -25,6 +25,7 @@ var FSHADER_SOURCE = `
       float dist = distance(v_Position, u_BacteriaCenters[i]);
       if (dist < u_BacteriaRadii[i]) {
         color = vec4(u_BacteriaColors[i], 1.0);
+        break; // end checking once a match is found
       }
     }
     gl_FragColor = color;
@@ -40,6 +41,7 @@ var bacteriaCenter = [0, 0, 1];
 var bacteriaRadius = 0.05;
 
 var bacteria = [];
+var bacteriaToRemove = [];
 var maxBacteria = 10;
 
 function generateBacteria() {
@@ -50,6 +52,19 @@ function generateBacteria() {
       color: [Math.random(), Math.random(), Math.random()],
     });
   }
+}
+
+function getClickedBacteriaIndex(x, y) {
+  for (let i = 0; i < bacteria.length; i++) {
+    let dx = bacteria[i].center[0] - x;
+    let dy = bacteria[i].center[1] - y;
+    let distance = Math.sqrt(dx * dx + dy * dy);
+    console.log('dist: ' + distance + ' rad: ' + bacteria[i].radius)
+    if (distance < bacteria[i].radius) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 function main() {
@@ -214,11 +229,28 @@ function main() {
     gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
 
     var centers = [], radii = [], colors = [];
-    for (let i = 0; i < maxBacteria; i++) {
-      centers.push(...bacteria[i].center);
-      radii.push(bacteria[i].radius);
-      colors.push(...bacteria[i].color);
-      bacteria[i].radius += 0.0005; // Growth over time
+    // for (let i = 0; i < maxBacteria; i++) {
+    for (let i = 0; i < bacteria.length; i++) {
+
+      if (bacteriaToRemove.includes(i)) {
+        // console.log('Deleting bacteria ' + i);
+
+        centers.push(...bacteria[i].center);
+        radii.push(bacteria[i].radius);
+        colors.push(...bacteria[i].color);
+        bacteria[i].radius = 0
+        // bacteria.splice(i, 1); // Remove bacteria that need to be removed
+        // bacteriaToRemove = bacteriaToRemove.filter(index => index !== i); // Clear the removal list
+        // i--; // Adjust index after removal
+
+      } else {
+        centers.push(...bacteria[i].center);
+        radii.push(bacteria[i].radius);
+        colors.push(...bacteria[i].color);
+        // bacteria[i].radius += 0.0005; // grow rate
+        bacteria[i].radius = Math.min(1, bacteria[i].radius + 0.0005);
+      }
+
     }
     
     gl.uniform3fv(u_BacteriaCenters, new Float32Array(centers));
@@ -230,6 +262,20 @@ function main() {
 
     requestAnimationFrame(render);
   }
+
+  canvas.addEventListener("click", function(event) {
+    // console.log('detected click ');
+    var rect = canvas.getBoundingClientRect();
+    var x = ((event.clientX - rect.left) / canvas.width) * 2 - 1;
+    var y = -(((event.clientY - rect.top) / canvas.height) * 2 - 1);
+    var clickedIndex = getClickedBacteriaIndex(x, y);
+    console.log('    click: ' + clickedIndex);
+    if (clickedIndex !== -1) {
+      // bacteria.splice(clickedIndex, 1);
+      bacteriaToRemove.push(clickedIndex);
+      // console.log('detected bacteria ' + clickedIndex);
+    }
+  });
 
   requestAnimationFrame(render);
 
