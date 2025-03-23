@@ -45,6 +45,7 @@ var bacteriaToRemove = [];
 var maxBacteria = 10;
 var totalPoints = 0;
 let bacteriaPoints = [];
+let bacteriaCrossedThreshold = [];
 
 
 function addPointsForRadius() {
@@ -67,10 +68,20 @@ function addPointsForRadius() {
 
       // check for the threshold crossing (radius reaches 1.0)
       if (radius >= 1.0 && !bacteriaToRemove.includes(index)) {
+        
+        if (!bacteriaCrossedThreshold.includes(index)) {
+          bacteriaCrossedThreshold.push(index); // we crossed thresh
+        }
+
         if (!bacteriaToRemove.includes(index)) {
           pointsToAdd += 43;
           bacteriaToRemove.push(index); // mark this bacteria to prevent further threshold rewards
         }
+        
+        // if (!bacteriaToRemove.includes(index)) {
+        //   pointsToAdd += 43;
+        //   bacteriaToRemove.push(index); // mark this bacteria to prevent further threshold rewards
+        // }
       }
     }
   });
@@ -273,6 +284,23 @@ function main() {
   var u_BacteriaRadii = gl.getUniformLocation(gl.program, "u_BacteriaRadii");
   var u_BacteriaColors = gl.getUniformLocation(gl.program, "u_BacteriaColors");
 
+
+
+  function checkGameStatus() {
+    // win condition: All bacteria poisoned and no two crossed the threshold
+    if (bacteriaToRemove.length === 10 && bacteriaCrossedThreshold.length < 2) {
+      console.log('bacteriaCrossedThreshold.length: ' + bacteriaCrossedThreshold.length)
+      alert("You Win! All bacteria were poisoned before any two reached the threshold.");
+    }
+  
+    // loss condition: Two bacteria crossed the threshold before all were poisoned
+    if (bacteriaToRemove.length === 10 && bacteriaCrossedThreshold.length >= 2) {
+      console.log('bacteriaCrossedThreshold.length: ' + bacteriaCrossedThreshold.length)
+      alert("Game Over! Two bacteria crossed the threshold before all were poisoned.");
+    }
+  }
+
+
   function render() {
     var mvpMatrix = new Matrix4();
     mvpMatrix.setPerspective(45, canvas.width / canvas.height, 0.1, 100);
@@ -332,7 +360,7 @@ function main() {
     gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
 
     // updatePoints();
-    addPointsForRadius();
+    addPointsForRadius(); checkGameStatus();
     requestAnimationFrame(render);
   }
 
