@@ -43,6 +43,35 @@ var bacteriaRadius = 0.05;
 var bacteria = [];
 var bacteriaToRemove = [];
 var maxBacteria = 10;
+var totalPoints = 0;
+
+function updatePoints() {
+  let pointsThisFrame = 0;
+
+  for (let i = 0; i < bacteria.length; i++) {
+    if (bacteriaToRemove.includes(i)) {
+      continue;
+    }
+
+    let radiusChange = 0.0005; // grow r8
+    let prevRadius = bacteria[i].radius;
+    bacteria[i].radius = Math.min(1.0, bacteria[i].radius + radiusChange);
+    let radiusDifference = bacteria[i].radius - prevRadius;
+
+    // 1 point for each 0.1 rad
+    pointsThisFrame += Math.floor(radiusDifference / 0.1);
+
+    // bonus points if any bacteria reach radius of 1
+    if (bacteria[i].radius === 1.0) {
+      pointsThisFrame += 43;
+    }
+
+  }
+
+  totalPoints += pointsThisFrame; // sum points to total
+  console.log('Points this frame: ' + pointsThisFrame);
+  console.log('Total points: ' + totalPoints);
+}
 
 function generateBacteria() {
   console.log('Generated Bacteria')
@@ -266,6 +295,7 @@ function main() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
 
+    updatePoints();
     requestAnimationFrame(render);
   }
 
