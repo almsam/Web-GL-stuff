@@ -290,13 +290,13 @@ function main() {
     // win condition: All bacteria poisoned and no two crossed the threshold
     if (bacteriaToRemove.length === 10 && bacteriaCrossedThreshold.length < 2) {
       console.log('bacteriaCrossedThreshold.length: ' + bacteriaCrossedThreshold.length)
-      alert("You Win! All bacteria were poisoned before any two reached the threshold.");
+      alert("You Win! All bacteria were poisoned before any two reached the threshold. \n you got: " + totalPoints + " points!");
     }
   
     // loss condition: Two bacteria crossed the threshold before all were poisoned
     if (bacteriaToRemove.length === 10 && bacteriaCrossedThreshold.length >= 2) {
       console.log('bacteriaCrossedThreshold.length: ' + bacteriaCrossedThreshold.length)
-      alert("Game Over! Two bacteria crossed the threshold before all were poisoned.");
+      alert("Game Over! Two bacteria crossed the threshold before all were poisoned. \n you got: " + totalPoints + " points!");
     }
   }
 
