@@ -44,6 +44,42 @@ var bacteria = [];
 var bacteriaToRemove = [];
 var maxBacteria = 10;
 var totalPoints = 0;
+let bacteriaPoints = [];
+
+
+function addPointsForRadius() {
+  let pointsToAdd = 0;
+
+  // O( all bacteria )
+  bacteria.forEach((bacteriaObj, index) => {
+    // if bacteria isn't removed and it's growing
+    if (!bacteriaToRemove.includes(index)) {
+      let radius = bacteriaObj.radius;
+      let previousPoints = bacteriaPoints[index] || 0;
+
+      // calculate radius increments in 0.1 steps
+      let radiusIncrements = Math.floor(radius / 0.1);
+      if (radiusIncrements > previousPoints) {
+        let newPoints = radiusIncrements - previousPoints;
+        pointsToAdd += newPoints;
+        bacteriaPoints[index] = radiusIncrements;
+      }
+
+      // check for the threshold crossing (radius reaches 1.0)
+      if (radius >= 1.0 && !bacteriaToRemove.includes(index)) {
+        if (!bacteriaToRemove.includes(index)) {
+          pointsToAdd += 43;
+          bacteriaToRemove.push(index); // mark this bacteria to prevent further threshold rewards
+        }
+      }
+    }
+  });
+
+  // Update total points
+  totalPoints += pointsToAdd;
+  console.log('Total Points: ' + totalPoints);
+}
+
 
 function updatePoints() {
   let pointsThisFrame = 0;
@@ -53,13 +89,13 @@ function updatePoints() {
       continue;
     }
 
-    let radiusChange = 0.0005; // grow r8
-    let prevRadius = bacteria[i].radius;
-    bacteria[i].radius = Math.min(1.0, bacteria[i].radius + radiusChange);
-    let radiusDifference = bacteria[i].radius - prevRadius;
+    // let radiusChange = 0.0005; // grow r8
+    // let prevRadius = bacteria[i].radius;
+    // bacteria[i].radius = Math.min(1.0, bacteria[i].radius + radiusChange);
+    // let radiusDifference = bacteria[i].radius - prevRadius;
 
-    // 1 point for each 0.1 rad
-    pointsThisFrame += Math.floor(radiusDifference / 0.1);
+    // // 1 point for each 0.1 rad
+    // pointsThisFrame += Math.floor(radiusDifference / 0.1);
 
     // bonus points if any bacteria reach radius of 1
     if (bacteria[i].radius === 1.0) {
@@ -295,7 +331,8 @@ function main() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.drawElements(gl.LINES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
 
-    updatePoints();
+    // updatePoints();
+    addPointsForRadius();
     requestAnimationFrame(render);
   }
 
