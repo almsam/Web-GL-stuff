@@ -1,3 +1,9 @@
+# Web GL projects
+
+Just a few projects I made using Web GL for a few extra credits during undergrad - made public for reference & education :3
+
+Enjoy Y'ALL!
+
 # Software Licence:
 
 > MIT License
